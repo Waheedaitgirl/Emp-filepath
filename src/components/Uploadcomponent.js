@@ -28,6 +28,7 @@ const UpLoadComponent = ({
       width: 300,
       height: 400,
       cropping: true,
+      mediaType: 'photo',
     })
       .then(image => {
         setFilePath({

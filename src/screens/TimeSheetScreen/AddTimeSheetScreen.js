@@ -40,6 +40,7 @@ import CustomTextInput from '../../components/TextInput';
 const MODULE_ID = '52';
 import BaseUrl from '../../api/BaseUrl';
 import axios from 'axios';
+
 const AddTimeSheetScreen = ({navigation}) => {
   const {user} = useSelector(state => state.LoginReducer);
   const {status} = useSelector(state => state.StatusReducer);
@@ -95,14 +96,14 @@ const AddTimeSheetScreen = ({navigation}) => {
         //if()
         setJobs(response.data.data);
         // if (response.status === 200) {
-          // console.log('[response.data.dat]', response.data.data);
-          if (response.data.data.length === 1) {
-            set_selected_job(response.data.data[0].job_id);
-            getJobtimetype(response.data.data[0].job_id);
-          }
-          // setJobs(response.data.data);
-          setLoading(false);
-        // } 
+        // console.log('[response.data.dat]', response.data.data);
+        if (response.data.data.length === 1) {
+          set_selected_job(response.data.data[0].job_id);
+          getJobtimetype(response.data.data[0].job_id);
+        }
+        // setJobs(response.data.data);
+        setLoading(false);
+        // }
         // else {
         //   setApiError(true);
         //   setLoading(false);
@@ -262,11 +263,14 @@ const AddTimeSheetScreen = ({navigation}) => {
       return is_value_not_zero;
     });
     if (!error) {
-      setLoading(true);
+      // setLoading(true);
       alldata.forEach((item, i) => {
         item.forEach((itm, index) => {
           if (itm.hours > 0 && itm.hours !== null) {
-            // console.log('[log_date]'.log_date , log_type, log_hours);
+            console.log(
+              '[log_date]',
+              moment(itm.insert_date).format('YYYY-MM-DD'),
+            );
             logs.push({
               log_type: time_type[i].name,
               log_date: moment(itm.insert_date).format('YYYY-MM-DD'),
@@ -275,14 +279,15 @@ const AddTimeSheetScreen = ({navigation}) => {
           }
         });
       });
-
+      console.log('[========time after formtion]', logs);
       if (filepath.path !== null) {
+        console.log('[filepath]', filepath);
         let s_job = jobs.find(x => (x.job_id = selected_job));
         var formdata = new FormData();
-        formdata.append('account_id',user?.account_id ); //user?.account_id
-         formdata.append('module_pk_id', '52');
+        formdata.append('account_id', user?.account_id); //user?.account_id
+        formdata.append('module_pk_id', '52');
         formdata.append('module_id', '52');
-        formdata.append('user_id',user?.candidate_id ); //user?.candidate_id
+        formdata.append('user_id', user?.candidate_id); //user?.candidate_id
         formdata.append('file', {
           uri:
             Platform.OS === 'android'
@@ -301,6 +306,7 @@ const AddTimeSheetScreen = ({navigation}) => {
           },
           body: formdata,
         };
+        console.log('[formdata add timesheet]', formdata);
 
         try {
           const response = await fetch(`${BaseUrl}files`, requestOptions);
@@ -323,8 +329,10 @@ const AddTimeSheetScreen = ({navigation}) => {
               comments: comments,
               is_attachment: filepath.path !== null ? '1' : '0',
               time_sheet_id: fileUploadResponse.insert_doc_id,
-              title: filepath.name,
-              path: fileUploadResponse.path,
+              title: fileUploadResponse.path,
+              path:
+                'https://storage.googleapis.com/recruitbpm-document/production/' +
+                fileUploadResponse.path,
               logs: logs,
               isApp: '1',
             };
