@@ -29,12 +29,14 @@ const UpLoadComponent = ({
       height: 400,
       cropping: true,
       mediaType: 'photo',
+      includeBase64: true,
     })
       .then(image => {
         setFilePath({
           path: image.path,
           name: image.path.split('/').pop(),
           ext: image.mime,
+          base64: image.data,
         });
         setIsModalVisible(false);
       })
@@ -49,12 +51,15 @@ const UpLoadComponent = ({
       width: 300,
       height: 400,
       cropping: true,
+      includeBase64: true,
     })
       .then(image => {
+        console.log('[==================Image====================]', image);
         setFilePath({
           path: image.path,
           name: image.path.split('/').pop(),
           ext: image.mime,
+          base64: image.data,
         });
         setIsModalVisible(false);
       })

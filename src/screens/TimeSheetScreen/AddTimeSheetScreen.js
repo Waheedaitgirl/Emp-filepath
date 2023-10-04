@@ -281,7 +281,7 @@ const AddTimeSheetScreen = ({navigation}) => {
       });
       console.log('[========time after formtion]', logs);
       if (filepath.path !== null) {
-        console.log('[filepath]', filepath);
+        console.log('[filepath========= ]', filepath);
         let s_job = jobs.find(x => (x.job_id = selected_job));
         var formdata = new FormData();
         formdata.append('account_id', user?.account_id); //user?.account_id
@@ -331,7 +331,7 @@ const AddTimeSheetScreen = ({navigation}) => {
               time_sheet_id: fileUploadResponse.insert_doc_id,
               title: fileUploadResponse.path,
               path:
-                'https://storage.googleapis.com/recruitbpm-document/production/' +
+                // 'https://storage.googleapis.com/recruitbpm-document/production/' +
                 fileUploadResponse.path,
               logs: logs,
               isApp: '1',

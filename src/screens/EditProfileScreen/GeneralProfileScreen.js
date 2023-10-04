@@ -33,6 +33,7 @@ import CustomTextInput from '../../components/TextInput';
 import {colors, fonts} from '../../constants/theme';
 import {UpdateData} from '../../store/actions/LoginActions';
 import {commonStyles, textStyles} from '../../styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 ExperienceSection = ({data}) => {
   const onDelete = id => {
@@ -193,6 +194,8 @@ CertificationSection = ({data}) => {
 };
 const GeneralProfileScreen = ({navigation}) => {
   const {user} = useSelector(state => state.LoginReducer);
+
+  const [userProfile, setUserProfile] = useState(null);
   // let item = route.params;
   const initialState = {
     firstName: user?.first_name,
@@ -202,7 +205,7 @@ const GeneralProfileScreen = ({navigation}) => {
     address: user?.address,
     city: user?.state_name,
     profilePicture: user?.profile_picture,
-    companyName: user?.company_name
+    companyName: user?.company_name,
     // upload_file: {
     //   name: item.document_link,
     //   mime_type: 'application/pdf',
@@ -233,7 +236,7 @@ const GeneralProfileScreen = ({navigation}) => {
         return {...state, address: action.payload};
       case 'city':
         return {...state, city: action.payload};
-        case 'profilePicture':
+      case 'profilePicture':
         return {...state, profilePicture: action.payload};
       default:
         return initialState;
@@ -244,6 +247,7 @@ const GeneralProfileScreen = ({navigation}) => {
     getExperience();
     getEducation();
     getCertificate();
+    getProfileInfo();
   }, []);
 
   const getExperience = () => {
@@ -259,7 +263,6 @@ const GeneralProfileScreen = ({navigation}) => {
     axios
       .request(config)
       .then(response => {
-        console.log('[list of get experiences]',response.data);
         setExperiences(response?.data?._embedded.Experiences);
       })
       .catch(error => {
@@ -267,11 +270,31 @@ const GeneralProfileScreen = ({navigation}) => {
       });
   };
 
-  const getEducation = () => {
-    
+  const getProfileInfo = () => {
+    let data = new FormData();
+
     let config = {
       method: 'get',
-      // maxBodyLength: Infinity,
+      url: `https://api.recruitbpm.com/users/${user?.candidate_owner_id}`,
+      headers: {
+        Authorization: 'Bearer 4545980ce66bd555d903f7dc739f91e631606eb1',
+      },
+      data: data,
+    };
+
+    axios
+      .request(config)
+      .then(response => {
+        console.log('Profile information ======>', response.data);
+      })
+      .catch(error => {
+        console.log('getProfileInfo', error.response);
+      });
+  };
+
+  const getEducation = () => {
+    let config = {
+      method: 'get',
       url: `https://api.recruitbpm.com/education?search={"candidate_id":${user?.candidate_id}}`,
       headers: {
         Authorization: 'Bearer 4545980ce66bd555d903f7dc739f91e631606eb1',
@@ -309,8 +332,8 @@ const GeneralProfileScreen = ({navigation}) => {
       });
   };
   const UpdateUserProfile = () => {
+    console.log('[============Profile Image]', filepath);
     let data = {
-      
       candidate_id: user.candidate_id,
       first_name: profileData.firstName,
       last_name: profileData.lastName,
@@ -322,15 +345,12 @@ const GeneralProfileScreen = ({navigation}) => {
       state_name: profileData.city,
       zipcode: 46000,
       profile_summary: '',
-      // upload_file: {
-      //   name: item.document_link,
-      //   mime_type: 'application/pdf',
-      //   content: '',
-      // },
-      profile_picture : profileData.profilePicture,
-      // company_name : '',
+      profile_picture: {
+        name: filepath.name,
+        mime_type: `${filepath.ext}`,
+        content: filepath.base64,
+      },
     };
-// console.log('[Profile data]', data);
     let config = {
       method: 'put',
       maxBodyLength: Infinity,
@@ -345,17 +365,43 @@ const GeneralProfileScreen = ({navigation}) => {
     axios
       .request(config)
       .then(response => {
-        console.log('[profile data]',response.data);
+        console.log('[edit profile data]', response.data);
+        setUserProfile(
+          'https://storage.googleapis.com/recruitbpm-document/' +
+            'production/' +
+            response.data.data.profile_picture,
+        );
+        saveProfilePicture(
+          // 'https://storage.googleapis.com/recruitbpm-document/' +
+          //   'production/' +
+          //   response.data.data.profile_picture,
+          'https://picsum.photos/200/300',
+        );
         UpdateDataLocal({...user, ...data});
         Alert.alert('Profile Updated', response?.data?.message);
         setisEditable(false);
       })
       .catch(error => {
+        console.log('[error]', error.response);
         Alert.alert('Profile Update Fialed', JSON.stringify(error.message));
       });
   };
+
+  const saveProfilePicture = image => {
+    AsyncStorage.setItem('ProfileImage', image)
+      .then(res => {
+        console.log('[res]', res);
+      })
+      .catch(err => {
+        console.log('[err]', err);
+      });
+  };
+
+  useEffect(() => {
+    console.log('[userProfile]', userProfile);
+  }, [userProfile]);
+
   if (!is_Editabe) {
-    console.log("[user profile]",user);
     return (
       <SafeAreaView style={{flex: 1, backgroundColor: colors.white}}>
         <View style={commonStyles.container}>
@@ -393,7 +439,14 @@ const GeneralProfileScreen = ({navigation}) => {
                       borderRadius: wp(50),
                     }}
                     resizeMode={'cover'}
-                    source = {filepath}
+                    onError={error => {
+                      console.log('[error image]', error);
+                    }}
+                    source={{
+                      uri: !userProfile
+                        ? userProfile
+                        : 'https://picsum.photos/200/300',
+                    }}
                     // source={require('../../assets/images/dp.jpg')}
                   />
                   <Text style={styles.profileInfoText}>
@@ -454,25 +507,24 @@ const GeneralProfileScreen = ({navigation}) => {
         <StatusBar barStyle={'light-content'} />
         <View style={commonStyles.container}>
           <View
+            style={{
+              alignItems: 'center',
+              flex: 1,
+            }}>
+            {/* <UpLoadComponent is_profile_picture={true} /> */}
+            <Image
               style={{
-                alignItems: 'center',
-                flex: 1,
-              }}>
-                 {/* <UpLoadComponent is_profile_picture={true} /> */}
-              <Image
-                style={{
-                  width: wp(30),
-                  height: wp(30),
-                  marginVertical: wp(5),
-                  // tintColor:colors.dark_primary_color,
-                  borderRadius: wp(15),
-                  marginBottom : wp(10)
-                }}
-                // source={require('../../assets/images/dummy.png')}
-                source = {filepath}
-              />
-             
-            </View>
+                width: wp(30),
+                height: wp(30),
+                marginVertical: wp(5),
+                // tintColor:colors.dark_primary_color,
+                borderRadius: wp(15),
+                marginBottom: wp(10),
+              }}
+              // source={require('../../assets/images/dummy.png')}
+              source={filepath}
+            />
+          </View>
           <CustomTextInput
             placeholder={'First Name *'}
             value={profileData.firstName}
@@ -495,10 +547,10 @@ const GeneralProfileScreen = ({navigation}) => {
             }}
             errorMessage={''}
           />
-          
+
           <CustomTextInput
-          style = {styles.inputcolor} 
-          placeholder={'Primary Email *'}
+            style={styles.inputcolor}
+            placeholder={'Primary Email *'}
             value={profileData.primaryEmail}
             // backgroundColor={'#0073B4'}
             backgroundColor={colors.label_color}
@@ -507,12 +559,11 @@ const GeneralProfileScreen = ({navigation}) => {
             lableColor={colors.dark_primary_color}
             borderRadius={scale(5)}
             onChangeText={text => {
-              dispatch({type: 'primaryEmail', payload: text });
+              dispatch({type: 'primaryEmail', payload: text});
             }}
             errorMessage={''}
-            
           />
-          
+
           <CustomTextInput
             placeholder={'Phone (Direct)'}
             value={profileData.phone}
@@ -524,7 +575,7 @@ const GeneralProfileScreen = ({navigation}) => {
             }}
             errorMessage={''}
           />
-       
+
           <CustomTextInput
             placeholder={'Address'}
             value={profileData.address}
@@ -547,14 +598,14 @@ const GeneralProfileScreen = ({navigation}) => {
             }}
             errorMessage={''}
           />
-   <UpLoadComponent
-          is_profile_image={false}
-          title={'Upload picture'}
-          filepath={filepath}
-          setFilePath={file => {
-            setFilePath(file);
-          }}
-        />
+          <UpLoadComponent
+            is_profile_image={false}
+            title={'Upload picture'}
+            filepath={filepath}
+            setFilePath={file => {
+              setFilePath(file);
+            }}
+          />
           <CustomButton
             loading={false}
             loadingText={'Saving'}
