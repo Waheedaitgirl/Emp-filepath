@@ -7,7 +7,7 @@ import {
   Text,
   View,
   TouchableOpacity,
-  StyleSheet
+  StyleSheet,
 } from 'react-native';
 import {downloadFile} from '../../helpers';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
@@ -47,6 +47,7 @@ const DetailsSheetScreen = ({navigation, route}) => {
     timeSheetDetailsById(item.time_sheet_id, user.account_id)
       .then(response => {
         if (response.status === 200) {
+          console.log('[response]', response);
           if (response.data.data.document_file !== null) {
             setFilePath({
               ...filepath,
@@ -151,15 +152,14 @@ const DetailsSheetScreen = ({navigation, route}) => {
 
         <ScrollView showsVerticalScrollIndicator={false}>
           <TimeSheetItem
-          time={
-            item.time_sheet_view == 'Week'
-              ? 'Week Starts at ' + getMonday(item.log_date)
-              : 'Day ' + new Date(item.log_date).toDateString()
-          }
+            time={
+              item.time_sheet_view == 'Week'
+                ? 'Week Starts at ' + getMonday(item.log_date)
+                : 'Day ' + new Date(item.log_date).toDateString()
+            }
             // time={`${item.time_sheet_view} Starts At ${item?.log_date}`}
             name={`${item.job_title} - ${time_sheet_details?.company_name}`}
-            submittedto={`Time Approver Manager - ${item?.u_approver_name
-            }`}
+            submittedto={`Time Approver Manager - ${item?.u_approver_name}`}
             // contactname={`Contact Manager - ${time_sheet_details?.contact_name}`}
             status={item.module_status_name}
             status_style={item.status_colour_code}
@@ -201,95 +201,95 @@ const DetailsSheetScreen = ({navigation, route}) => {
               comment={time_sheet_details.document_title}
               onPress={() => handleClick(time_sheet_details.document_title)}
             /> */}
-               <TouchableOpacity 
-            disabled={!time_sheet_details?.document_file}
-            style={{width: 200, height: 50}}
-            onPress={() => {
-              if (
-                ext == 'png' ||
+            <TouchableOpacity
+              disabled={!time_sheet_details?.document_file}
+              style={{width: 200, height: 50}}
+              onPress={() => {
+                if (
+                  ext == 'png' ||
+                  ext == 'jpg' ||
+                  ext == 'gif' ||
+                  ext == 'jpeg' ||
+                  ext == 'webp'
+                ) {
+                  navigation.navigate('Preview', {
+                    file:
+                      'https://storage.googleapis.com/recruitbpm-document/' +
+                      'production' +
+                      '/' +
+                      time_sheet_details.document_file,
+                  });
+                } else {
+                  if (
+                    ext == 'doc' ||
+                    ext == 'docx' ||
+                    ext == 'pdf' ||
+                    ext == 'rtf'
+                  ) {
+                    let url =
+                      'https://storage.googleapis.com/recruitbpm-document/' +
+                      'production' +
+                      '/' +
+                      time_sheet_details.document_file;
+
+                    Alert.alert(
+                      'Attention!',
+                      'Do you want to download the file?',
+                      [
+                        {
+                          text: 'Cancel',
+                          onPress: () => {},
+                          style: 'cancel',
+                        },
+                        {
+                          text: 'Download',
+                          onPress: () => {
+                            downloadFile(url);
+                          },
+                        },
+                      ],
+                    );
+                  } else {
+                    null;
+                  }
+                }
+              }}>
+              {ext == 'pdf' ? (
+                <AntDesign
+                  name={'pdffile1'}
+                  color={'red'}
+                  size={30}
+                  style={{margin: 6}}
+                />
+              ) : ext == 'doc' ||
+                ext == 'docx' ||
+                ext == 'rtf' ||
+                ext == 'txt' ? (
+                <AntDesign
+                  name={'wordfile1'}
+                  color={'blue'}
+                  size={30}
+                  style={{margin: 6}}
+                />
+              ) : ext == 'png' ||
                 ext == 'jpg' ||
                 ext == 'gif' ||
                 ext == 'jpeg' ||
-                ext == 'webp'
-              ) {
-                navigation.navigate('Preview', {
-                  file:
-                    'https://storage.googleapis.com/recruitbpm-document/' +
-                    'production' +
-                    '/' +
-                    time_sheet_details.document_file,
-                });
-              } else {
-                if (
-                  ext == 'doc' ||
-                  ext == 'docx' ||
-                  ext == 'pdf' ||
-                  ext == 'rtf'
-                ) {
-                  let url =
-                    'https://storage.googleapis.com/recruitbpm-document/' +
-                    'production' +
-                    '/' +
-                    time_sheet_details.document_file;
-
-                  Alert.alert(
-                    'Attention!',
-                    'Do you want to download the file?',
-                    [
-                      {
-                        text: 'Cancel',
-                        onPress: () => {},
-                        style: 'cancel',
-                      },
-                      {
-                        text: 'Download',
-                        onPress: () => {
-                          downloadFile(url);
-                        },
-                      },
-                    ],
-                  );
-                } else {
-                  null;
-                }
-              }
-            }}>
-            {ext == 'pdf' ? (
-              <AntDesign
-                name={'pdffile1'}
-                color={'red'}
-                size={30}
-                style={{margin: 6}}
-              />
-            ) : ext == 'doc' ||
-              ext == 'docx' ||
-              ext == 'rtf' ||
-              ext == 'txt' ? (
-              <AntDesign
-                name={'wordfile1'}
-                color={'blue'}
-                size={30}
-                style={{margin: 6}}
-              />
-            ) : ext == 'png' ||
-              ext == 'jpg' ||
-              ext == 'gif' ||
-              ext == 'jpeg' ||
-              ext == 'webp' ? (
-              <Image
-                style={styles.imageStyle}
-                source={{
-                  uri:
-                    'https://storage.googleapis.com/recruitbpm-document/' +
-                    'production' +
-                    '/' +
-                    time_sheet_details.document_file,
-                }}
-              />
-            ) : (
-              <Text>No attachment availabe!</Text>
-            )}
-          </TouchableOpacity>
+                ext == 'webp' ? (
+                <Image
+                  style={styles.imageStyle}
+                  source={{
+                    uri:
+                      'https://storage.googleapis.com/recruitbpm-document/' +
+                      'production' +
+                      '/' +
+                      time_sheet_details.document_file,
+                  }}
+                />
+              ) : (
+                <Text>No attachment availabe!</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>

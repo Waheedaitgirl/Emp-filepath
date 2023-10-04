@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {colors, fonts} from '../constants/theme';
 import {
   View,
@@ -19,10 +19,28 @@ import {scale} from 'react-native-size-matters';
 import {useDispatch} from 'react-redux';
 import {useSelector} from 'react-redux';
 import {widthPercentageToDP} from 'react-native-responsive-screen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const DrawerContentt = ({navigation, props}) => {
   const dispatch = useDispatch();
   const localSignout = () => dispatch(Signout(null));
   const {user} = useSelector(state => state.LoginReducer);
+
+  const [profileImage, setProfileImage] = useState(null);
+
+  useEffect(() => {
+    getProfilePicture();
+  }, [user]);
+
+  const getProfilePicture = () => {
+    AsyncStorage.getItem('ProfileImage').then(res => {
+      console.log('[Drawer res]', res);
+      if (res) {
+        setProfileImage(res);
+      }
+    });
+  };
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: colors.dark_primary_color}}>
       <DrawerContentScrollView
@@ -34,17 +52,22 @@ const DrawerContentt = ({navigation, props}) => {
           justifyContent: 'flex-start',
         }}>
         <View style={styles.drawercontent}>
-      <Image
-            source={require('../assets/images/avatar.png')}
+          <Image
+            // source={require('../assets/images/avatar.png')}
+            source={
+              profileImage
+                ? {uri: profileImage}
+                : require('../assets/images/avatar.png')
+            }
             style={{
               width: scale(50),
               borderRadius: scale(100),
               height: scale(50),
               resizeMode: 'cover',
-              marginStart:scale(10),
+              marginStart: scale(10),
             }}
-          />  
-             {/* <TouchableOpacity
+          />
+          {/* <TouchableOpacity
         onPress={() => localSignout()}
         style={styles.logoutbutton}>
         {/* <View style={{width: scale(20), height: scale(20)}}>
@@ -54,7 +77,7 @@ const DrawerContentt = ({navigation, props}) => {
             size={scale(20)}
           />
         </View> */}
-        {/* <Text style={{...styles.textStyle1}}>Upload Picture</Text>
+          {/* <Text style={{...styles.textStyle1}}>Upload Picture</Text>
       </TouchableOpacity>  */}
           <View style={{justifyContent: 'flex-start'}}>
             <Text style={styles.textStyleHeader}>
@@ -223,12 +246,9 @@ const styles = StyleSheet.create({
     paddingLeft: scale(15),
     backgroundColor: '#fff',
   },
-  textStyle1:
-  {
+  textStyle1: {
     marginLeft: scale(10),
     fontFamily: fonts.Medium,
     color: colors.white,
-    
-  }
-  ,
+  },
 });
